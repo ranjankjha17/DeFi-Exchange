@@ -48,5 +48,29 @@ contract Exchange is ERC20 {
         return liquidity;
     }
 
+    // Returns the amount Eth/Crypto Dev tokens that would be returned to the user in the swap
+    function removeLiquidity(uint _amount) public returns(uint,uint){
+        require(_amount>0,"_amount should be greater than zero");
+        uint ethReserve=address(this).balance;
+        uint _totalSupply=totalSupply();
+
+        // The amount of Eth that would be sent back to the user is based
+        uint ethAmount=(ethReserve * _amount)/_totalSupply;
+        // The amount of Crypto Dev token that would be sent back to the user is based
+        // on a ratio
+
+        uint cryptoDevTokenAmount=(getReserve() * _amount)/_totalSupply;
+
+        // Burn the sent LP tokens from the user's wallet because they are already sent to
+        // remove liquidity
+
+        _burn(msg.sender,_amount);
+        // Transfer `ethAmount` of Eth from user's wallet to the contract
+        payable(msg.sender).Transfer(ethAmount);
+        // Transfer `cryptoDevTokenAmount` of Crypto Dev tokens from the user's wallet to the contract
+        ERC20(cryptoDevTokenAddress).Transfer(msg.sender,cryptoDevTokenAmount);
+        return (ethAmount,cryptoDevTokenAmount);
+
+    }
 }
 
