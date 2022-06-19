@@ -66,9 +66,9 @@ contract Exchange is ERC20 {
 
         _burn(msg.sender,_amount);
         // Transfer `ethAmount` of Eth from user's wallet to the contract
-        payable(msg.sender).Transfer(ethAmount);
+        payable(msg.sender).transfer(ethAmount);
         // Transfer `cryptoDevTokenAmount` of Crypto Dev tokens from the user's wallet to the contract
-        ERC20(cryptoDevTokenAddress).Transfer(msg.sender,cryptoDevTokenAmount);
+        ERC20(cryptoDevTokenAddress).transfer(msg.sender,cryptoDevTokenAmount);
         return (ethAmount,cryptoDevTokenAmount);
 
     }
@@ -84,6 +84,48 @@ contract Exchange is ERC20 {
         uint256 denominator=(inputReserve * 100) + inputAmountWithFee;
 
         return numerator / denominator;
+    }
+
+    //Swaps Eth for CryptoDev Tokens
+
+    function ethToCryptoDevToken(uint _minTokens) public payable{
+        uint256 tokenReserve=getReserve();
+
+        // call the `getAmountOfTokens` to get the amount of Crypto Dev tokens
+        // that would be returned to the user after the swap
+        // Notice that the `inputReserve` we are sending is equal to  
+        // `address(this).balance - msg.value` instead of just `address(this).balance`
+        // because `address(this).balance` already contains the `msg.value` user has sent in the given call
+        // so we need to subtract it to get the actual input reserve
+        
+        uint256 tokensBought=getAmountOfTokens(msg.value, address(this).balance,tokenReserve);
+
+        require(tokensBought >= _minTokens,"insufficient output amount");
+            // Transfer the `Crypto Dev` tokens to the user
+            ERC20(cryptoDevTokenAddress).transfer(msg.sender,tokensBought);
+
+    }
+
+    //Swaps CryptoDev Tokens for Eth
+
+    function cryptoDevTokenToEth(uint _tokensSold, uint _minEth) public{
+        uint256 tokenReserve=getReserve();
+        // call the `getAmountOfTokens` to get the amount of Eth
+        // that would be returned to the user after the swap
+
+        uint256 ethBought=getAmountOfTokens(_tokensSold, tokenReserve,address(this).balance);
+        require(ethBought >= _minEth,"insufficient output amount");
+        // Transfer `Crypto Dev` tokens from the user's address to the contract
+
+        ERC20(cryptoDevTokenAddress).transferFrom(
+        msg.sender,
+        address(this),
+        _tokensSold
+        );
+        // send the `ethBought` to the user from the contract
+        payable(msg.sender).transfer(ethBought);
+
+
     }
 }
 
