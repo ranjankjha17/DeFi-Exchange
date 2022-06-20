@@ -16,7 +16,6 @@ import {
 } from "../utils/removeLiquidity";
 import { swapTokens, getAmountOfTokensReceivedFromSwap } from "../utils/swap";
 
-//20/6/22
 
 export default function Home() {
   /** General state variables */
